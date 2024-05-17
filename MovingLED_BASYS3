@@ -1,0 +1,63 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+--**************************************************************************
+--*
+--* Name: MovingLed Wrapper Diagram
+--* Designer: Michaela Crego
+--*  THIS WRAPPER IS FOR BASYS3 BOARD
+--* The lab focuses on learning about sequential design by controlling an 
+--* LED's position on a 16-LED bar.
+--* Users can move the lit LED left or right using joystick buttons, with 
+--* movement stopping at the bar's edges.
+--* The system uses a seven-segment display to show the LED's position in 
+--* decimal and hexadecimal, 
+--* with specific displays designated for each format.
+--*
+--**************************************************************************
+entity MovingLed_BASYS3 is 
+    port ( 
+        --inputs
+        btnL: in std_logic;
+        btnR: in std_logic;
+        btnC: in std_logic; --reset
+        --outputs
+        seg: out std_logic_vector(6 downto 0);
+        an: out std_logic_vector(3 downto 0);
+        led: out std_logic_vector(15 downto 0);
+        --clock 
+        clk: in std_logic
+    );
+end MovingLed_BASYS3;
+        
+architecture MovingLed_BASYS3_ARCH of MovingLed_BASYS3 is
+    component MovingLed --ports that we have on our component like in TB
+    --the same ports that we have in our design diagram
+        port ( 
+            --inputs
+            leftButton: in std_logic; 
+            rightButton: in std_logic;
+            --outputs
+            segDis: out std_logic_vector(6 downto 0); --7seg display
+            anodeSel:  out std_logic_vector(3 downto 0);
+            leds: out std_logic_vector(15 downto 0); --leds
+            --clock, reset
+            reset: in std_logic;
+            clock: in std_logic
+            ); 
+    end component MovingLed;
+begin
+    -- This maps the internal component's outputs to the wrapper's outputs directly.
+    SWITCH_DRIVER: MovingLed port map (  
+        --inputs
+        leftButton => btnL,
+        rightButton => btnR,
+        reset => btnC,
+        --outputs
+        segDis => seg,
+        anodeSel => an,
+        leds => led,
+        --clock
+        clock => clk
+    );
+end MovingLed_BASYS3_ARCH;
