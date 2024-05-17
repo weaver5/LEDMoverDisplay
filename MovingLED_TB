@@ -1,0 +1,163 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+--**************************************************************************
+--*
+--* Name: MovingLed Test Bench
+--* Designer: Michaela Crego
+--* THIS TEST BENCH CODE IS FOR MOVING LED , tests cases
+--* LAB DESCRIPTION:
+--* The lab focuses on learning about sequential design by controlling an 
+--* LED's position on a 16-LED bar.
+--* Users can move the lit LED left or right using joystick buttons, with 
+--* movement stopping at the bar's edges.
+--* The system uses a seven-segment display to show the LED's position in 
+--* decimal and hexadecimal, 
+--* with specific displays designated for each format.
+--*
+--**************************************************************************
+
+entity MovingLed_TB is
+end MovingLed_TB;
+
+architecture MovingLed_TB_ARCH of MovingLed_TB is
+
+    ----general-definitions--------------------------------------------CONSTANTS--
+    constant ACTIVE:   std_logic := '1';
+    constant INACTIVE: std_logic := '0';
+    
+    ----test-vectors------------------------------------------------TEST-VECTORS--
+    type testRecord_t is record
+        leftButton: std_logic;
+        rightButton: std_logic;
+    end record;
+    type testArray_t is array(natural range <>) of testRecord_t;
+    constant TEST_VECTORS: testArray_t := (
+        --leftButton--rightButton--
+        (   INACTIVE,    ACTIVE  ),  --RIGHT
+        (   INACTIVE,    ACTIVE  ),  --RIGHT
+        (   INACTIVE,    ACTIVE),  --RIGHT BOUNDARY!
+        (   ACTIVE,    INACTIVE),  --LEFT
+        (   INACTIVE,    INACTIVE  ), 
+        (   ACTIVE,    INACTIVE),  --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE  ), 
+        (   ACTIVE,    INACTIVE),  --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),  --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE),  
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE), 
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE), 
+        (   ACTIVE,    INACTIVE),   --LEFT
+        (   INACTIVE,    INACTIVE), 
+        (   ACTIVE,    INACTIVE),   --LEFT BOUNDARY!
+        (   INACTIVE,    INACTIVE), 
+        (   INACTIVE,    ACTIVE)    --RIGHT
+    );
+
+    ----signals-------------------------------------------------------UUT-SIGNALS-
+    signal reset:       std_logic := not ACTIVE;
+    signal clock:       std_logic := not ACTIVE;
+    signal leftButton:  std_logic;
+    signal rightButton: std_logic;
+    signal leds:        std_logic_vector(15 downto 0);
+    signal segDis:      std_logic_vector(6 downto 0);
+    signal anodeSel:    std_logic_vector(3 downto 0);
+
+    component MovingLed
+        port (
+            segDis:      out std_logic_vector(6 downto 0);
+            anodeSel:    out std_logic_vector(3 downto 0);
+            leds:        out std_logic_vector(15 downto 0);
+            reset:       in  std_logic;
+            clock:       in  std_logic;
+            leftButton:  in  std_logic;
+            rightButton: in  std_logic
+        );
+    end component MovingLed;
+
+begin
+
+    --=======================================================================
+    --  UUT
+    --========================================================================
+    UUT: MovingLed
+        port map (
+            segDis      => segDis,
+            anodeSel    => anodeSel,
+            leds        => leds,
+            reset       => reset,
+            clock       => clock,
+            leftButton  => leftButton,
+            rightButton => rightButton
+        );
+
+    --=======================================================================
+    --  Reset
+    --=======================================================================
+    SYSTEM_RESET: process
+    begin
+        reset <= ACTIVE;
+        wait for 20 ns;
+        reset <= not ACTIVE;
+        wait;
+    end process SYSTEM_RESET;
+
+    --=======================================================================
+    --  Clock
+    --=======================================================================
+    SYSTEM_CLOCK: process
+        begin
+            clock <= not ACTIVE;
+            wait for 5 ns;
+            clock <= ACTIVE;
+            wait for 5 ns;
+        end process SYSTEM_CLOCK;
+    --========================================================================
+    --  signal DRIVER
+    --=======================================================================
+    SIGNAL_DRIVER: process(clock,reset)
+        variable index: natural := 0;
+    begin
+        --initialize signals
+        if reset = ACTIVE then
+            leftButton <= INACTIVE;
+            rightButton <= INACTIVE;
+            index := 0;  --reset the index
+        --apply test w/ each rising edge of the clock
+        elsif rising_edge(clock) then
+            if index < TEST_VECTORS'Length then
+                --current index vector testing
+                leftButton <= TEST_VECTORS(index).leftButton;
+                rightButton <= TEST_VECTORS(index).rightButton;
+                --to the next one 
+                index := index + 1;
+            else
+                --hold the state after testing...
+                leftButton <= INACTIVE;
+                rightButton <= INACTIVE;
+                -- index := 0; --loop
+            end if;
+        end if;
+    end process SIGNAL_DRIVER;
+end MovingLed_TB_ARCH;
